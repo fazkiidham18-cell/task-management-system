@@ -9,6 +9,58 @@
  */
 const EnhancedTask = require('../models/EnhancedTask');
 class TaskRepository {
+    // Tambahkan method ini di class TaskRepository
+
+/**
+ * Find tasks by category
+ * @param {string} category - Category to filter by
+ * @returns {EnhancedTask[]} - Array of tasks in category
+ */
+findByCategory(category) {
+    return this.findAll().filter(task => task.category === category);
+}
+
+/**
+ * Get task statistics by category
+ * @param {string} userId - User ID (optional)
+ * @returns {Object} - Statistics grouped by category
+ */
+getCategoryStats(userId = null) {
+    let tasks = userId ? this.findByOwner(userId) : this.findAll();
+    
+    const stats = {};
+    const categories = EnhancedTask.getAvailableCategories();
+    
+    // Initialize all categories with 0
+    categories.forEach(category => {
+        stats[category] = {
+            total: 0,
+            completed: 0,
+            pending: 0,
+            overdue: 0
+        };
+    });
+    
+    // Count tasks in each category
+    tasks.forEach(task => {
+        const category = task.category;
+        if (stats[category]) {
+            stats[category].total++;
+            
+            if (task.isCompleted) {
+                stats[category].completed++;
+            } else {
+                stats[category].pending++;
+            }
+            
+            if (task.isOverdue) {
+                stats[category].overdue++;
+            }
+        }
+    });
+    
+    return stats;
+}
     constructor(storageManager) {
         this.storage = storageManager;
         this.tasks = new Map(); // Cache in-memory
